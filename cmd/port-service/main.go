@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/platinumscatter/port-service/internal/config"
+	"github.com/platinumscatter/port-service/internal/repository/inmem"
 	"github.com/platinumscatter/port-service/internal/services"
 	"github.com/platinumscatter/port-service/internal/transport"
 )
@@ -25,11 +26,14 @@ func main() {
 func run() error {
 	cfg := config.Read()
 
-	portService := services.NewPortService()
+	portStoreRepo := inmem.NewPortStore()
+	portService := services.NewPortService(portStoreRepo)
 	httpServer := transport.NewHttpService(portService)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/port", httpServer.GetPort).Methods("GET")
+	router.HandleFunc("/count", httpServer.CountPorts).Methods("GET")
+	router.HandleFunc("/ports", httpServer.UploadPorts).Methods("POST")
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,
